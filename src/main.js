@@ -10,7 +10,7 @@ import { generateSampleData } from './sample-data.js';
 import { buildContextPacket } from './context-packet.js';
 import {
   localInsight, getAISettings, saveAISettings, clearAISecrets,
-  OLLAMA_PRESET, askAI, testAIConnection
+  AI_PROVIDER_PRESETS, askAI, testAIConnection
 } from './advisor.js';
 import { saveSnapshot, loadSnapshot, deleteAllData, exportData } from './storage.js';
 import {
@@ -937,20 +937,21 @@ async function sendAIRequest(question, ctx) {
 /* ── Modal: Settings ───────────────────────────────────── */
 function openSettings() {
   const ai = getAISettings();
+  const providerOptions = Object.entries(AI_PROVIDER_PRESETS)
+    .map(([value, preset]) => `<option value="${value}" ${ai.provider === value ? 'selected' : ''}>${escapeHtml(preset.label)}</option>`)
+    .join('');
   document.getElementById('modalTitle').textContent = 'Settings';
   document.getElementById('modalBody').innerHTML = `
     <h3 style="margin-top:0">AI Advisor (optional)</h3>
-    <p style="font-size:10px">Configure an OpenAI-compatible endpoint. Disabled by default. Secrets are stored in session memory only.</p>
+    <p style="font-size:10px">Choose any model exposed through an OpenAI-compatible chat endpoint. Use a gateway such as OpenRouter for models whose native APIs use another format. Disabled by default; secrets stay in this browser session.</p>
     <div class="settings-grid">
       <label>Enabled <input type="checkbox" id="aiEnabled" ${ai.enabled ? 'checked' : ''}></label>
-      <label>Endpoint URL <input type="url" id="aiEndpoint" value="${escapeHtml(ai.endpoint || '')}" placeholder="https://api.openai.com/v1/chat/completions"></label>
-      <label>Model <input type="text" id="aiModel" value="${escapeHtml(ai.model || '')}" placeholder="gpt-4o-mini"></label>
-      <label>API Key (optional) <input type="password" id="aiApiKey" value="${escapeHtml(ai.apiKey || '')}" placeholder="sk-..."></label>
+      <label>Provider <select id="aiProvider">${providerOptions}</select></label>
+      <label>Compatible endpoint URL <input type="url" id="aiEndpoint" value="${escapeHtml(ai.endpoint || '')}" placeholder="https://provider.example/v1/chat/completions"></label>
+      <label>Model ID <input type="text" id="aiModel" value="${escapeHtml(ai.model || '')}" placeholder="provider/model-name"></label>
+      <label>Provider API key (optional) <input type="password" id="aiApiKey" value="${escapeHtml(ai.apiKey || '')}" placeholder="Stored for this tab only"></label>
     </div>
-    <div class="preset-row">
-      <button class="secondary-button" id="ollamaPreset">Ollama localhost</button>
-      <button class="secondary-button" id="openAIPreset">OpenAI default</button>
-    </div>
+    <p class="settings-note">Endpoint and model remain editable after choosing a preset. Direct browser calls require provider CORS support.</p>
     <div class="settings-actions">
       <button class="secondary-button" id="testAiConnection">Test connection</button>
       <button class="danger-button" id="clearAiSecrets">Clear secrets</button>
@@ -973,21 +974,24 @@ function openSettings() {
 
   // Wire settings events
   document.getElementById('cancelSettings').onclick = closeModal;
-  document.getElementById('ollamaPreset').onclick = () => {
-    document.getElementById('aiEndpoint').value = OLLAMA_PRESET.endpoint;
-    document.getElementById('aiModel').value = OLLAMA_PRESET.model;
-  };
-  document.getElementById('openAIPreset').onclick = () => {
-    document.getElementById('aiEndpoint').value = 'https://api.openai.com/v1/chat/completions';
-    document.getElementById('aiModel').value = 'gpt-4o-mini';
+  document.getElementById('aiProvider').onchange = event => {
+    const preset = AI_PROVIDER_PRESETS[event.target.value];
+    if (!preset || event.target.value === 'custom') return;
+    document.getElementById('aiEndpoint').value = preset.endpoint;
+    document.getElementById('aiModel').value = preset.model;
   };
   document.getElementById('saveSettings').onclick = () => {
     const settings = {
       enabled: document.getElementById('aiEnabled').checked,
+      provider: document.getElementById('aiProvider').value,
       endpoint: document.getElementById('aiEndpoint').value.trim(),
       model: document.getElementById('aiModel').value.trim(),
       apiKey: document.getElementById('aiApiKey').value.trim()
     };
+    if (settings.enabled && (!settings.endpoint || !settings.model)) {
+      document.getElementById('testResult').innerHTML = '<div class="conn-test-result fail">Choose a provider or enter both an endpoint and model ID.</div>';
+      return;
+    }
     state.aiEnabled = settings.enabled;
     saveAISettings(settings);
     updateAdvisorLabel();
@@ -997,6 +1001,7 @@ function openSettings() {
     const resultEl = document.getElementById('testResult');
     resultEl.innerHTML = '<div class="conn-test-result">Testing...</div>';
     const settings = {
+      provider: document.getElementById('aiProvider').value,
       endpoint: document.getElementById('aiEndpoint').value.trim(),
       model: document.getElementById('aiModel').value.trim(),
       apiKey: document.getElementById('aiApiKey').value.trim()
@@ -1011,6 +1016,7 @@ function openSettings() {
     document.getElementById('aiEndpoint').value = '';
     document.getElementById('aiModel').value = '';
     document.getElementById('aiApiKey').value = '';
+    document.getElementById('aiProvider').value = 'custom';
     document.getElementById('aiEnabled').checked = false;
     state.aiEnabled = false;
     updateAdvisorLabel();
@@ -1042,8 +1048,10 @@ function updateAdvisorLabel() {
   const label = document.getElementById('advisorLabel');
   const sub = document.getElementById('advisorSubLabel');
   if (state.aiEnabled) {
+    const ai = getAISettings();
+    const provider = AI_PROVIDER_PRESETS[ai.provider]?.label || 'Custom provider';
     label.textContent = 'AI Advisor';
-    sub.textContent = 'External endpoint · verify responses';
+    sub.textContent = `${provider} · ${ai.model || 'model not set'}`;
   } else {
     label.textContent = 'Local Insights';
     sub.textContent = 'Deterministic · offline';

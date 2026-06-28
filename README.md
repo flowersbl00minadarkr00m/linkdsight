@@ -77,9 +77,11 @@ Disabled by default. To enable:
 
 1. Open Settings (gear icon in top bar)
 2. Check "Enabled" under AI Advisor
-3. Enter an OpenAI-compatible endpoint URL, model, and optional API key
-4. Use the **Ollama localhost** preset for local models (`http://localhost:11434/v1/chat/completions`)
+3. Choose Ollama, OpenAI, OpenRouter, DeepSeek, Groq, Together AI, Mistral, or a custom compatible endpoint
+4. Edit the endpoint URL and model ID as needed, then enter an optional provider API key
 5. Test the connection before saving
+
+The transport supports models exposed through an OpenAI-compatible chat-completions endpoint. Models with different native API formats, including native Anthropic or Gemini endpoints, require a compatible gateway such as OpenRouter or a user-owned proxy.
 
 **Privacy considerations:**
 

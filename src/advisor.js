@@ -114,12 +114,52 @@ export function localInsight(question, data) {
  */
 export const AI_SETTINGS_KEY = 'linkdsight_ai_settings';
 
+export const AI_PROVIDER_PRESETS = {
+  custom: { label: 'Custom compatible endpoint', endpoint: '', model: '' },
+  ollama: {
+    label: 'Ollama (local)',
+    endpoint: 'http://localhost:11434/v1/chat/completions',
+    model: 'llama3.1'
+  },
+  openai: {
+    label: 'OpenAI',
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    model: 'gpt-4o-mini'
+  },
+  openrouter: {
+    label: 'OpenRouter',
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    model: 'openai/gpt-4o-mini'
+  },
+  deepseek: {
+    label: 'DeepSeek',
+    endpoint: 'https://api.deepseek.com/chat/completions',
+    model: 'deepseek-chat'
+  },
+  groq: {
+    label: 'Groq',
+    endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+    model: 'llama-3.3-70b-versatile'
+  },
+  together: {
+    label: 'Together AI',
+    endpoint: 'https://api.together.xyz/v1/chat/completions',
+    model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+  },
+  mistral: {
+    label: 'Mistral',
+    endpoint: 'https://api.mistral.ai/v1/chat/completions',
+    model: 'mistral-small-latest'
+  }
+};
+
 export function getAISettings() {
+  const defaults = { enabled: false, provider: 'custom', endpoint: '', model: '', apiKey: '' };
   try {
     const raw = sessionStorage.getItem(AI_SETTINGS_KEY);
-    return raw ? JSON.parse(raw) : { enabled: false, endpoint: '', model: '', apiKey: '' };
+    return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
   } catch {
-    return { enabled: false, endpoint: '', model: '', apiKey: '' };
+    return defaults;
   }
 }
 
@@ -131,14 +171,6 @@ export function saveAISettings(settings) {
 export function clearAISecrets() {
   sessionStorage.removeItem(AI_SETTINGS_KEY);
 }
-
-/**
- * Ollama localhost preset URL.
- */
-export const OLLAMA_PRESET = {
-  endpoint: 'http://localhost:11434/v1/chat/completions',
-  model: 'llama3.1'
-};
 
 /**
  * Send a request to an OpenAI-compatible endpoint.
@@ -246,4 +278,4 @@ export async function testAIConnection(settings, options = {}) {
   }
 }
 
-export default { localInsight, getAISettings, saveAISettings, clearAISecrets, OLLAMA_PRESET, askAI, testAIConnection };
+export default { localInsight, getAISettings, saveAISettings, clearAISecrets, AI_PROVIDER_PRESETS, askAI, testAIConnection };
