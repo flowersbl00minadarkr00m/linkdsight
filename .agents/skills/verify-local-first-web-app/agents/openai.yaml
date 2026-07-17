@@ -1,4 +1,0 @@
-interface:
-  display_name: "Verify Local-First Web App"
-  short_description: "Release checks for local-first privacy apps"
-  default_prompt: "Use $verify-local-first-web-app to verify this local-first web app before deployment."

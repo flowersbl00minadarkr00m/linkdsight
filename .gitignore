@@ -5,3 +5,10 @@ dist/
 *.log
 
 .vercel/
+
+# agent/workflow-internal files stay local
+.ai/
+AGENTS.md
+CLAUDE.md
+HANDOFF.md
+.agents/
