@@ -16,6 +16,21 @@ export const shortDate = (value) => {
 
 export const ageLabel = (days) => days > 730 ? `${Math.round(days / 365)} years` : days > 365 ? '1 year' : `${Math.round(days / 30)} months`;
 
+/**
+ * Per-channel normalization for the authority-gap dot-plot. Each channel is
+ * scaled to its own max across all signals (channels use different units and
+ * must not be compared to each other by length — see L-4 in spec 001).
+ * Returns { maxes, rows: [{ signal, normalized }] } with normalized 0-100.
+ */
+export const normalizeAuthoritySignals = (signals, channels = ['private', 'public', 'learning', 'evidence']) => {
+  const maxes = Object.fromEntries(channels.map(c => [c, Math.max(...signals.map(s => s[c] || 0), 1)]));
+  const rows = signals.map(signal => ({
+    signal,
+    normalized: Object.fromEntries(channels.map(c => [c, Math.round(100 * (signal[c] || 0) / maxes[c])]))
+  }));
+  return { maxes, rows };
+};
+
 export const parseDate = (value) => {
   if (!value) return null;
   const clean = String(value).replace(/\s+UTC$/, '');

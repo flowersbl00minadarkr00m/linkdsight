@@ -43,29 +43,36 @@ export function generateSampleData() {
     });
   }
 
-  // Generate messages
+  // Generate messages.
+  // Deliberately uneven and deterministic: contact k gets 1-13 messages with
+  // varied reciprocity and recency so downstream relationship scores (fit,
+  // pulse, staleness, route confidence) spread realistically instead of
+  // collapsing to a single value in demos.
   const messages = [];
-  for (let i = 0; i < 200; i++) {
-    const fromOwner = Math.floor(i / 50) % 2 === 0;
-    const ci = (i * 11 + 2) % 50;
-    const conn = connections[ci];
-    const dateIdx = Math.floor(i / 200 * 28) + Math.floor(Math.sin(i * 1.3) * 4) + 2;
-    const date = months[Math.min(months.length - 1, Math.abs(dateIdx))];
+  const topics = ['AI adoption strategy for enterprise', 'risk governance framework', 'digital transformation',
+    'compliance automation', 'board leadership program', 'community engagement metrics'];
+  for (let k = 0; k < 50; k++) {
+    const conn = connections[k];
+    const msgCount = 1 + ((k * 5 + 2) % 6) + (k % 7 === 0 ? 7 : 0); // 1..13
+    const ownerShare = 0.2 + ((k * 3) % 4) * 0.2;                   // 0.2..0.8 of messages sent by owner
+    const recencyBase = (k * 3) % 30;                               // months back for the latest message: 0..29
+    for (let j = 0; j < msgCount; j++) {
+      const fromOwner = j < Math.round(msgCount * ownerShare);
+      const monthsBack = recencyBase + j * (1 + (k % 3));           // thread stretches into the past
+      const date = months[Math.max(0, months.length - 1 - monthsBack)];
+      const subject = topics[(k + j) % topics.length];
+      const content = `Hi ${conn['First Name']}, following up on our discussion about ${subject.toLowerCase()}. I wanted to share some thoughts on how we can approach this together. The key is balancing innovation with proper governance controls. Let me know your availability for a follow-up conversation. Best regards`;
 
-    const topics = ['AI adoption strategy for enterprise', 'risk governance framework', 'digital transformation',
-      'compliance automation', 'board leadership program', 'community engagement metrics'];
-    const subject = topics[i % topics.length];
-    const content = `Hi ${conn['First Name']}, following up on our discussion about ${subject.toLowerCase()}. I wanted to share some thoughts on how we can approach this together. The key is balancing innovation with proper governance controls. Let me know your availability for a follow-up conversation. Best regards`;
-
-    messages.push({
-      FROM: fromOwner ? sampleOwner : `${conn['First Name']} ${conn['Last Name']}`,
-      TO: fromOwner ? `${conn['First Name']} ${conn['Last Name']}` : sampleOwner,
-      DATE: date ? `${date}-10` : '',
-      SUBJECT: subject,
-      CONTENT: content,
-      'SENDER PROFILE URL': fromOwner ? '' : conn.URL,
-      'RECIPIENT PROFILE URLS': fromOwner ? conn.URL : ''
-    });
+      messages.push({
+        FROM: fromOwner ? sampleOwner : `${conn['First Name']} ${conn['Last Name']}`,
+        TO: fromOwner ? `${conn['First Name']} ${conn['Last Name']}` : sampleOwner,
+        DATE: date ? `${date}-10` : '',
+        SUBJECT: subject,
+        CONTENT: content,
+        'SENDER PROFILE URL': fromOwner ? '' : conn.URL,
+        'RECIPIENT PROFILE URLS': fromOwner ? conn.URL : ''
+      });
+    }
   }
 
   // Generate shares
