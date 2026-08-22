@@ -6,6 +6,10 @@ Import your LinkedIn data export and explore your professional network entirely 
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+## Series context
+
+LinkdSight is the proof object for [*The Link Between What You Build and What You Know*](https://henryflowers45.substack.com/p/the-link-between-what-you-build-and) ([LinkedIn post](https://www.linkedin.com/posts/henry-flowers_deepseek-pi-codex-activity-7477367632715833344-2kT6)), part of the *Looping in the Human* series.
+
 ![LinkdSight overview](docs/assets/hero.png)
 
 ## Features
@@ -19,7 +23,7 @@ Import your LinkedIn data export and explore your professional network entirely 
 ## Quick start
 
 ```bash
-npm install
+npm ci
 npm run dev      # http://localhost:5173
 npm test
 ```
@@ -29,8 +33,9 @@ Drop your LinkedIn export ZIP on the import screen. `Connections.csv` and `messa
 ## Privacy
 
 - The ZIP is parsed locally and kept in memory; derived data reaches IndexedDB only after explicit opt-in, and can be deleted anytime from Settings.
+- Imports are capped at a 50 MB ZIP, 200 entries, 25 MB per expanded CSV, and 500,000 total rows so malformed archives cannot exhaust the page unchecked.
 - No analytics, trackers, remote fonts, or CDN calls — all dependencies are bundled.
-- The optional AI advisor is off by default, uses your own key (sessionStorage only), and shows you the exact minimized payload — no raw messages, names, or emails — before every send.
+- The optional AI advisor is off by default, keeps your key only in JavaScript memory, and clears it on reload. It shows the exact minimized payload—no raw messages, names, or emails—before every send.
 
 ## License
 
