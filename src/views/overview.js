@@ -54,9 +54,15 @@ function renderGrowthChart(d) {
     `<line class="grid-line" x1="${pad.l}" y1="${y(max * r)}" x2="${w - pad.r}" y2="${y(max * r)}"/><text class="axis-text" x="0" y="${y(max * r) + 3}">${Math.round(max * r)}</text>`
   ).join('');
 
-  const labels = points.map((p, i) => i % Math.max(1, Math.floor(points.length / 8)) === 0
-    ? `<text class="axis-text" text-anchor="middle" x="${x(i)}" y="${h - 6}">${p.label.slice(0, 4)}</text>` : ''
-  ).join('');
+  const yearGroups = new Map();
+  points.forEach((point, index) => {
+    const year = point.label.slice(0, 4);
+    yearGroups.set(year, [...(yearGroups.get(year) || []), index]);
+  });
+  const labels = Array.from(yearGroups, ([year, indices]) => {
+    const centre = indices.reduce((sum, index) => sum + x(index), 0) / indices.length;
+    return `<text class="axis-text" text-anchor="middle" x="${centre}" y="${h - 6}">${year}</text>`;
+  }).join('');
 
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   svg.innerHTML = `${grid}<path class="growth-area" d="${area}"/><path class="growth-line" d="${line}"/>${labels}`;
@@ -89,6 +95,6 @@ function renderGoalCoverage(d) {
     const item = domainMap[goal] || { count: 0, share: 0 };
     const target = targets[i] || 8;
     const status = item.share >= target ? 'On target' : `${(target - item.share).toFixed(1)} pts below`;
-    return `<div class="goal-coverage-row"><div><strong>${escapeHtml(goal)}</strong><small>${fmt(item.count)} connections · ${status}</small><div class="progress"><span style="width:${Math.min(100, item.share / target * 100)}%;background:${COLORS[i]}"></span></div></div><div class="coverage-value">${item.share}%</div></div>`;
+    return `<div class="goal-coverage-row"><div class="goal-coverage-head"><strong>${escapeHtml(goal)}</strong><span>${item.share}%</span></div><small>${fmt(item.count)} connections · ${status}</small><div class="progress"><span style="width:${Math.min(100, item.share / target * 100)}%;background:${COLORS[i]}"></span></div></div>`;
   }).join('');
 }

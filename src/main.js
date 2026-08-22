@@ -393,13 +393,13 @@ function openSettings() {
   document.getElementById('modalTitle').textContent = 'Settings';
   document.getElementById('modalBody').innerHTML = `
     <h3 style="margin-top:0">AI Advisor (optional)</h3>
-    <p style="font-size:10px">Choose any model exposed through an OpenAI-compatible chat endpoint. Use a gateway such as OpenRouter for models whose native APIs use another format. Disabled by default; secrets stay in this browser session.</p>
+    <p style="font-size:10px">Choose any model exposed through an OpenAI-compatible chat endpoint. Use a gateway such as OpenRouter for models whose native APIs use another format. Disabled by default; the API key stays in memory and clears on reload.</p>
     <div class="settings-grid">
       <label>Enabled <input type="checkbox" id="aiEnabled" ${ai.enabled ? 'checked' : ''}></label>
       <label>Provider <select id="aiProvider">${providerOptions}</select></label>
       <label>Compatible endpoint URL <input type="url" id="aiEndpoint" value="${escapeHtml(ai.endpoint || '')}" placeholder="https://provider.example/v1/chat/completions"></label>
       <label>Model ID <input type="text" id="aiModel" value="${escapeHtml(ai.model || '')}" placeholder="provider/model-name"></label>
-      <label>Provider API key (optional) <input type="password" id="aiApiKey" value="${escapeHtml(ai.apiKey || '')}" placeholder="Stored for this tab only"></label>
+      <label>Provider API key (optional) <input type="password" id="aiApiKey" value="${escapeHtml(ai.apiKey || '')}" placeholder="Memory only — clears on reload"></label>
     </div>
     <p class="settings-note">Endpoint and model remain editable after choosing a preset. Direct browser calls require provider CORS support.</p>
     <div class="settings-actions">

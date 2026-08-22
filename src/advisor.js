@@ -110,9 +110,20 @@ export function localInsight(question, data) {
 
 /**
  * AI Advisor settings management.
- * Secrets are stored in sessionStorage only.
+ * Non-secret preferences persist locally. The API key is memory-only.
  */
 export const AI_SETTINGS_KEY = 'linkdsight_ai_settings';
+let volatileApiKey = '';
+
+export function purgeLegacyAISettings(storage = globalThis.sessionStorage) {
+  try {
+    storage?.removeItem(AI_SETTINGS_KEY);
+  } catch {
+    // Some privacy modes disable browser storage. New keys remain memory-only.
+  }
+}
+
+purgeLegacyAISettings();
 
 export const AI_PROVIDER_PRESETS = {
   custom: { label: 'Custom compatible endpoint', endpoint: '', model: '' },
@@ -156,20 +167,29 @@ export const AI_PROVIDER_PRESETS = {
 export function getAISettings() {
   const defaults = { enabled: false, provider: 'custom', endpoint: '', model: '', apiKey: '' };
   try {
-    const raw = sessionStorage.getItem(AI_SETTINGS_KEY);
-    return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+    const raw = localStorage.getItem(AI_SETTINGS_KEY);
+    const preferences = raw ? JSON.parse(raw) : {};
+    return { ...defaults, ...preferences, apiKey: volatileApiKey };
   } catch {
-    return defaults;
+    return { ...defaults, apiKey: volatileApiKey };
   }
 }
 
 export function saveAISettings(settings) {
-  // Never persist API key to localStorage – sessionStorage only
-  sessionStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
+  volatileApiKey = typeof settings.apiKey === 'string' ? settings.apiKey : '';
+  const { apiKey: _secret, ...preferences } = settings;
+  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(preferences));
 }
 
 export function clearAISecrets() {
-  sessionStorage.removeItem(AI_SETTINGS_KEY);
+  volatileApiKey = '';
+  try {
+    const settings = getAISettings();
+    const { apiKey: _secret, ...preferences } = settings;
+    localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify({ ...preferences, enabled: false }));
+  } catch {
+    // Memory clearing is the security boundary; preference cleanup is best effort.
+  }
 }
 
 /**
@@ -278,4 +298,4 @@ export async function testAIConnection(settings, options = {}) {
   }
 }
 
-export default { localInsight, getAISettings, saveAISettings, clearAISecrets, AI_PROVIDER_PRESETS, askAI, testAIConnection };
+export default { localInsight, getAISettings, saveAISettings, clearAISecrets, purgeLegacyAISettings, AI_PROVIDER_PRESETS, askAI, testAIConnection };
