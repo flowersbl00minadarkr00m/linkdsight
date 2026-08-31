@@ -17,6 +17,6 @@
   },
   "dependencies": {
     "jszip": "^3.10.1",
-    "papaparse": "^5.5.2"
+    "papaparse": "^5.7.0"
   }
 }
